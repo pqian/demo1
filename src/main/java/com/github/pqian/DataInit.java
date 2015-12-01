@@ -3,6 +3,9 @@ package com.github.pqian;
 import java.io.IOException;
 import java.math.BigDecimal;
 
+import javax.security.cert.CertificateException;
+import javax.security.cert.X509Certificate;
+
 import lombok.extern.slf4j.Slf4j;
 
 import org.apache.http.HttpResponse;
@@ -14,6 +17,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.params.CoreProtocolPNames;
 import org.apache.http.ssl.SSLContextBuilder;
+import org.apache.http.ssl.TrustStrategy;
 import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -41,11 +45,22 @@ public class DataInit {
 		try {
 			SSLContextBuilder builder = new SSLContextBuilder();
 		    builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
+		    
+//		    SSLContextBuilder builder = new SSLContextBuilder().loadTrustMaterial(null, new TrustStrategy() {
+//				@Override
+//				public boolean isTrusted(
+//						java.security.cert.X509Certificate[] chain,
+//						String authType)
+//						throws java.security.cert.CertificateException {
+//					return true;
+//				}
+//            });
+		    
 		    SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(builder.build());
 		    httpClient = HttpClients.custom().setSSLSocketFactory(sslsf).setUserAgent("Mozilla/5.0 Firefox/26.0").build();
 		    
-			req = new HttpGet("https://www.zalora.com.my/mobile­api/women/clothing");
-			//req = new HttpGet("https://www.zalora.com.my/mobile­api/women/clothing?maxitems=60&page=1");
+			// req = new HttpGet("https://www.zalora.com.my/mobile­api/women/clothing?maxitems=1&page=1");
+			req = new HttpGet("https://www.zalora.com.my/mobile­api/women/clothing?maxitems=60&page=1");
 			resp = httpClient.execute(req);
 
 			log.info("Response {}", resp.getStatusLine());
@@ -73,7 +88,7 @@ public class DataInit {
 					log.error("Failed to retrieve data");
 				}
 			} else {
-				log.error("Product cannot be prepared because {}", resp.getStatusLine());
+				log.error("Product cannot be prepared because {}", resp);
 			}
 		} catch (final Exception e) {
 			log.error("Product cannot be prepared", e);
@@ -88,22 +103,6 @@ public class DataInit {
 			}
 		}
 	}
-	
-//	private static HttpClient createSSLClientDefault() throw {
-//		try {
-//             SSLContext sslContext = new SSLContextBuilder().loadTrustMaterial(null, new TrustStrategy() {
-//		                 public boolean isTrusted(X509Certificate[] chain,
-//		                                 String authType) throws CertificateException {
-//		                     return true;
-//		                 }
-//		             }).build();
-//		             SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext);
-//		             return HttpClients.custom().setSSLSocketFactory(sslsf).build();
-//		         } catch (Exception e) {
-//		             log.error("failed to create SSL client", e);
-//		         }
-//		         return  HttpClients.createDefault();
-//		}
 
 	private void releaseConnection(final HttpRequestBase req,
 			final HttpResponse resp) {
