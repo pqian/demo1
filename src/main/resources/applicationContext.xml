@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:cxf="http://cxf.apache.org/core" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:util="http://www.springframework.org/schema/util" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:jaxrs="http://cxf.apache.org/jaxrs" xmlns:task="http://www.springframework.org/schema/task"
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc" xmlns:jpa="http://www.springframework.org/schema/data/jpa"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans 
+		http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context.xsd
+		http://cxf.apache.org/core
+		http://cxf.apache.org/schemas/core.xsd
+		http://www.springframework.org/schema/tx
+		http://www.springframework.org/schema/tx/spring-tx.xsd
+		http://cxf.apache.org/jaxrs
+		http://cxf.apache.org/schemas/jaxrs.xsd
+		http://www.springframework.org/schema/util
+		http://www.springframework.org/schema/util/spring-util.xsd
+		http://www.springframework.org/schema/task
+		http://www.springframework.org/schema/task/spring-task.xsd
+		http://www.springframework.org/schema/jdbc
+	  	http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+	  	http://www.springframework.org/schema/data/jpa
+	  	http://www.springframework.org/schema/data/jpa/spring-jpa.xsd">
+
+	<import resource="classpath:META-INF/cxf/cxf.xml" />
+	<import resource="classpath:META-INF/cxf/cxf-servlet.xml" />
+
+	<context:property-placeholder
+		ignore-resource-not-found="true"
+		location="classpath:app.properties, classpath:app-${user.name}.properties, file:${app.extern.properties}" />
+
+	<context:annotation-config />
+
+	<context:component-scan base-package="com.github.pqian" />
+	
+	<tx:annotation-driven />
+	
+	<task:annotation-driven />
+
+	<bean id="entityManagerFactory"
+		class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="packagesToScan" value="com.github.pqian.entity" />
+		<property name="jpaVendorAdapter">
+			<bean class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter" />
+		</property>
+		<property name="jpaProperties" ref="jpaProperties" />
+	</bean>
+
+	<bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager" />
+
+	<jpa:repositories base-package="com.github.pqian.repository" />
+		
+	<util:properties id="jpaProperties">
+		<prop key="hibernate.dialect">org.hibernate.dialect.H2Dialect</prop>
+		<prop key="hibernate.hbm2ddl.auto">create-drop</prop>
+		<prop key="hibernate.show_sql">true</prop>
+		<prop key="hibernate.format_sql">true</prop>
+	</util:properties>
+
+	<jdbc:embedded-database id="dataSource" type="H2" />
+
+	<context:annotation-config />
+
+	<context:component-scan base-package="com.github.pqian" />
+
+	<tx:annotation-driven />
+
+	<bean id="mapper" class="org.dozer.DozerBeanMapper">
+		<property name="mappingFiles">
+			<list>
+				<value>myApp-dozerMapping.xml</value>
+			</list>
+		</property>
+	</bean>
+
+	<bean id="jacksonMapper"
+		class="org.springframework.http.converter.json.Jackson2ObjectMapperFactoryBean">
+		<property name="featuresToDisable">
+			<array>
+				<util:constant
+					static-field="com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS" />
+			</array>
+		</property>
+		<!-- use SimpleDateFormat to replace default StdDateFormat(GMT) -->
+		<property name="dateFormat">
+			<bean class="java.text.SimpleDateFormat">
+				<constructor-arg value="yyyy-MM-dd HH:mm:ss" />
+			</bean>
+		</property>
+	</bean>  
+	
+	<bean id="jsonProvider" class="com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider" />
+
+	<bean id="beanValidationFeature" class="org.apache.cxf.validation.BeanValidationFeature" />
+
+	<jaxrs:server id="myAppREST" address="/rest">
+		<jaxrs:serviceBeans>
+			<ref bean="myAppService" />
+		</jaxrs:serviceBeans>
+		<jaxrs:providers>
+			<ref bean="jsonProvider" />
+		</jaxrs:providers>
+		<jaxrs:features>
+			<ref bean="beanValidationFeature" />
+		</jaxrs:features>
+	</jaxrs:server>
+</beans>
