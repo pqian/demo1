@@ -48,10 +48,10 @@
 		<javax.el.version>3.0.1-b05</javax.el.version>
 		<hibernate-validator.version>5.2.0.Beta1</hibernate-validator.version>
 		<httpclient.version>4.5.1</httpclient.version>
-		<json-path.version>1.2.0</json-path.version>
+		<json-path.version>2.1.0</json-path.version>
 	</properties>
 
-<dependencyManagement>
+	<dependencyManagement>
 		<dependencies>
 			<!-- SLF4J -->
 			<dependency>
@@ -64,6 +64,11 @@
 				<artifactId>slf4j-log4j12</artifactId>
 				<version>${slf4j.version}</version>
 			</dependency>
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>jcl-over-slf4j</artifactId>
+				<version>${slf4j.version}</version>
+			</dependency>		
 			<!-- LOG4J -->
 			<dependency>
 				<groupId>log4j</groupId>
@@ -262,6 +267,12 @@
 				<groupId>org.apache.httpcomponents</groupId>
 				<artifactId>httpclient</artifactId>
 				<version>${httpclient.version}</version>
+				<exclusions>
+					<exclusion>
+			            <artifactId>commons-logging</artifactId>
+            			<groupId>commons-logging</groupId>
+					</exclusion>
+				</exclusions>
 			</dependency>
 			<dependency>
 	    		<groupId>com.jayway.jsonpath</groupId>
@@ -299,6 +310,10 @@
 		<dependency>
 			<groupId>log4j</groupId>
 			<artifactId>log4j</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>jcl-over-slf4j</artifactId>
 		</dependency>
 		
 		<dependency>

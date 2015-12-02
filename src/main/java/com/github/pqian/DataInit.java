@@ -7,6 +7,7 @@ import javax.security.cert.CertificateException;
 import javax.security.cert.X509Certificate;
 
 import lombok.extern.slf4j.Slf4j;
+import net.minidev.json.JSONArray;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -57,10 +58,10 @@ public class DataInit {
 //            });
 		    
 		    SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(builder.build());
-		    httpClient = HttpClients.custom().setSSLSocketFactory(sslsf).setUserAgent("Mozilla/5.0 Firefox/26.0").build();
+		    httpClient = HttpClients.custom().setSSLSocketFactory(sslsf)/*.setUserAgent("Mozilla/5.0 Firefox/26.0")*/.build();
 		    
-			// req = new HttpGet("https://www.zalora.com.my/mobile­api/women/clothing?maxitems=1&page=1");
-			req = new HttpGet("https://www.zalora.com.my/mobile­api/women/clothing?maxitems=60&page=1");
+//			req = new HttpGet("https://www.zalora.com.my/mobile-api/women/clothing?maxitems=1&page=1");
+			req = new HttpGet("https://www.zalora.com.my/mobile-api/women/clothing?maxitems=60&page=1");
 			resp = httpClient.execute(req);
 
 			log.info("Response {}", resp.getStatusLine());
@@ -68,13 +69,15 @@ public class DataInit {
 				ReadContext ctx = JsonPath.parse(EntityUtils.toString(resp.getEntity()));
 				Boolean success = ctx.read("$.success");
 				if (success) {
-					int size = ctx.read("$.metadata.results.length()");
+					Integer size = ctx.read("$.metadata.results.length()");
 					for (int i = 0; i<size; i++) {
-						Long id = ctx.read("$.metadata.results["+ i +"].id");
+						Long id = new Long((String)ctx.read("$.metadata.results["+ i +"].id"));
 						String name = ctx.read("$.metadata.results["+ i +"].data.name");
 						String brand = ctx.read("$.metadata.results["+ i +"].data.brand");
-						BigDecimal price = ctx.read("$.metadata.results["+ i +"].data.price");
-						String image = ctx.read("$.metadata.results["+ i +"].images[?(@.default)].path");
+						String priceStr = ctx.read("$.metadata.results["+ i +"].data.price");
+						BigDecimal price = (priceStr!=null && !priceStr.isEmpty())? new BigDecimal(priceStr) : null;
+						JSONArray paths = ctx.read("$.metadata.results["+ i +"].images[?(@.default)].path");
+						String image = paths.size()>0? (String)paths.get(0) : null;
 						Product p = new Product();
 						p.setId(id);
 						p.setName(name);
@@ -116,5 +119,9 @@ public class DataInit {
 				log.warn("Failed to release connection", e);
 			}
 		}
+	}
+	
+	public int getResultSize(ReadContext ctx) {
+		return ctx.read("$.metadata.results.length()");
 	}
 }

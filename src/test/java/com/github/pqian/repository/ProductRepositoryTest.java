@@ -27,7 +27,7 @@ public class ProductRepositoryTest {
 	}
 	
 	@Ignore
-	//@Test
+//	@Test
 	public void testRetrievingData() throws InterruptedException {
 		// wait for data warming up
 		Thread.sleep(5000);
